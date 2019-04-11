@@ -1,0 +1,38 @@
+---
+title: "Trabalho 1: Estatística Descritiva e pacote DESCRIPTR"
+author: "Yago Ronan e Ana Carolini"
+output: html_document
+---
+
+```{r message = FALSE, warning = FALSE}
+library(descriptr)
+library(dplyr)
+library(gsheet)
+library(markdown)
+```
+
+## Introdução
+Para visualização de dados, o R se apresenta como uma ferramenta bastante funcional e possui alguns packages específicos que facilitam esse trabalho. Assim, nesse trabalho, vamos apresentar o package DESCRIPTR, package que possui funções que facilitarão a solução do problema proposto para turma.
+
+## Avaliar os dados e o tipo das variáveis
+Ao visualizar a tabela inicial, é possivel perceber que existem valores nulos. Um tratamento inicial dos dados deve ser feito.
+```{r echo=FALSE}
+gsheet2tbl("https://docs.google.com/open?id=1qegBjG-GkGQHwhnkzOmLNbI_pddNMs7el-bwlPlDEnA")
+```
+
+
+```{r echo=FALSE}
+str(c)
+```
+
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
