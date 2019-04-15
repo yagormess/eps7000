@@ -4,11 +4,13 @@ author: "Yago Ronan e Ana Carolini"
 output: html_document
 ---
 
-```{r message = FALSE, warning = FALSE}
+```{r echo=FALSE, message=FALSE, paged.print=FALSE}
+
 library(descriptr)
 library(dplyr)
 library(gsheet)
 library(markdown)
+
 ```
 
 ## Introdução
@@ -16,14 +18,45 @@ Para visualização de dados, o R se apresenta como uma ferramenta bastante func
 
 ## Avaliar os dados e o tipo das variáveis
 Ao visualizar a tabela inicial, é possivel perceber que existem valores nulos. Um tratamento inicial dos dados deve ser feito.
-```{r echo=FALSE}
+
+```{r Ler tabela no google, echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
 gsheet2tbl("https://docs.google.com/open?id=1qegBjG-GkGQHwhnkzOmLNbI_pddNMs7el-bwlPlDEnA")
 ```
 
+Bloco de comandos para tratar os dados:
 
-```{r echo=FALSE}
+```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+a<-gsheet2tbl("https://docs.google.com/open?id=1qegBjG-GkGQHwhnkzOmLNbI_pddNMs7el-bwlPlDEnA")
+c<-filter(a, Item_Weight != "null" & Item_Identifier != "null" & Outlet_Size != "")
+c$Item_Fat_Content[c$Item_Fat_Content=="LF"]<-"Low Fat"
+c$Item_Fat_Content[c$Item_Fat_Content=="low fat"]<-"Low Fat"
+rm(a)
+```
+
+Como resultado, obtemos os seguintes dados:
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
 str(c)
 ```
+
+## Categorizar variáveis
+Chamamos aqui, atenção para as colunas da tabela:
+
+item_Identifier: ID do produto original
+Item_Weight: Peso do produto
+Item_Fat_Content: Se o produto é de baixa gordura ou não
+Item_Visibility: A % da área total de exibição de todos os produtos em uma loja
+alocada para o produto específico
+Item_Type: A categoria à qual o produto pertence
+Item_MRP: Preço sugerido de venda
+
+Outlet_Identifier: ID da loja original
+Outlet_Establishment_Year: O ano em que a loja foi estabelecida
+Outlet_Size: O tamanho da loja em termos de área ocupada
+Outlet_Location_Type: O tipo de cidade em que a loja é situada
+Outlet_Type: Se a loja é apenas uma mercearia ou algum tipo de supermercado
+
+Item_Outlet_Sales: Vendas do produto em uma loja particular. Esta é a variável de
+interesse.
 
 
 
