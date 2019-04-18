@@ -1,28 +1,29 @@
 ---
-title: "Trabalho 1: Estatística Descritiva e pacote DESCRIPTR"
+title: "Trabalho 1: Estatística Descritiva e Pacote DESCRIPTR"
 author: "Yago Ronan e Ana Carolini"
 output: html_document
+theme: journal
+df_print: paged
 ---
 
-```{r echo=FALSE, message=FALSE, paged.print=FALSE}
-
+```{r message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 library(descriptr)
 library(dplyr)
 library(gsheet)
 library(markdown)
-title1<-"Introdução"
-title2<-"Avaliar os dados e o tipo das variáveis"
-title3<-"Categorizar variáveis"
+library(ggplot2)
+library(ggExtra)
 ```
 
-##Introdução `r title1`
+##Introdução
 
-Para visualização de dados, o R se apresenta como uma ferramenta bastante funcional e possui alguns packages específicos que facilitam esse trabalho. Assim, nesse trabalho, vamos apresentar o package DESCRIPTR, package que possui funções que facilitarão a solução do problema proposto para turma.
+Para visualização de dados, o R se apresenta como uma ferramenta bastante funcional e possui alguns packages específicos que facilitam esse trabalho. Assim, nesse trabalho, vamos apresentar o package DESCRIPTR, package que possui funções que facilitarão a solução do problema proposto para turma. A partir da tabela HiperUFSC Dataset e com auxilio do pacote DescriptR, analisaremos de forma descritiva os dados apresentados de vendas de 1559 produtos em 10 lojas distintas. Nossa variável de interesse, Item_Outlet_Sales que corresponde às vendas do produto em uma loja particular, será análisada em diferentes gráficos de apoio.
 
-## Avaliar os dados e o tipo das variáveis `r title2`
+
+## Avaliar os dados e o tipo das variáveis
 Ao visualizar a tabela inicial, é possivel perceber que existem valores nulos. Um tratamento inicial dos dados deve ser feito.
 
-```{r Ler tabela no google, echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+```{r Ler tabela no google, message=FALSE, warning=FALSE, include=FALSE, paged.print=TRUE}
 gsheet2tbl("https://docs.google.com/open?id=1qegBjG-GkGQHwhnkzOmLNbI_pddNMs7el-bwlPlDEnA")
 ```
 
@@ -30,10 +31,15 @@ Bloco de comandos para tratar os dados:
 
 ```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
 a<-gsheet2tbl("https://docs.google.com/open?id=1qegBjG-GkGQHwhnkzOmLNbI_pddNMs7el-bwlPlDEnA")
-c<-filter(a, Item_Weight != "null" & Item_Identifier != "null" & Outlet_Size != "")
+c<-filter(a, Item_Weight != "null" & Item_Identifier != "null" & Outlet_Size != "" & Item_Fat_Content != "")
 c$Item_Fat_Content[c$Item_Fat_Content=="LF"]<-"Low Fat"
 c$Item_Fat_Content[c$Item_Fat_Content=="low fat"]<-"Low Fat"
-rm(a)
+c$Item_Fat_Content[c$Item_Fat_Content=="reg"]<-"Regular"
+c$Outlet_Size<-factor(c$Outlet_Size)
+c$Outlet_Location_Type<-factor(c$Outlet_Location_Type)
+c$Outlet_Type<-factor(c$Outlet_Type)
+c$Item_Fat_Content<-factor(c$Item_Fat_Content)
+c$Item_Type<-factor(c$Item_Type)
 ```
 
 Como resultado, obtemos os seguintes dados:
@@ -41,22 +47,113 @@ Como resultado, obtemos os seguintes dados:
 str(c)
 ```
 
-## Categorizar variáveis `r title3`
-Chamamos aqui, atenção para as colunas da tabela:
+##Variáveis
 
-item_Identifier: ID do produto original
+Item_Identifier: ID do produto original
+&nbsp;
+
 Item_Weight: Peso do produto
+&nbsp;
+
 Item_Fat_Content: Se o produto é de baixa gordura ou não
+&nbsp;
+
 Item_Visibility: A % da área total de exibição de todos os produtos em uma loja
 alocada para o produto específico
+&nbsp;
+
 Item_Type: A categoria à qual o produto pertence
+&nbsp;
+
 Item_MRP: Preço sugerido de venda
+&nbsp;
 
 Outlet_Identifier: ID da loja original
+&nbsp;
+
 Outlet_Establishment_Year: O ano em que a loja foi estabelecida
+&nbsp;
+
 Outlet_Size: O tamanho da loja em termos de área ocupada
+&nbsp;
+
 Outlet_Location_Type: O tipo de cidade em que a loja é situada
+&nbsp;
+
 Outlet_Type: Se a loja é apenas uma mercearia ou algum tipo de supermercado
+&nbsp;
 
 Item_Outlet_Sales: Vendas do produto em uma loja particular. Esta é a variável de
 interesse.
+&nbsp;
+
+
+```{r message=TRUE, warning=TRUE, include=FALSE, paged.print=FALSE}
+
+TabelaItem<-c %>% group_by(Item_Identifier) %>%
+  summarise(
+    TotalVendas=sum(Item_Outlet_Sales),
+    PreçoMedio=mean(Item_MRP),
+    Peso=mean(Item_Weight)
+    )
+    
+TabelaOutlet<-c %>% group_by(Outlet_Identifier) %>% summarise(
+  TotalVendas=sum(Item_Outlet_Sales)
+    )
+
+Tabela1<-c %>% group_by(Item_Identifier,Item_Fat_Content) %>% summarise(TotalVendas=sum(Item_Outlet_Sales), PreçoMedio=mean(Item_MRP),Peso=mean(Item_Weight))
+
+Tabela1$FaixadePreço<-cut(Tabela1$PreçoMedio,seq(30,270,30))
+
+Tabela2<-c %>% group_by(Item_Identifier,Outlet_Identifier) %>% summarise(Vendas=sum(Item_Outlet_Sales),
+                                                          PreçoMedio=mean(Item_MRP))
+Tabela2$FaixadePreço<-cut(Tabela2$PreçoMedio,seq(30,270,30))
+Tabela4<-c%>%group_by(Outlet_Size)%>%summarise(SomadasVendas=sum(Item_Outlet_Sales),mediana=median(Outlet_Establishment_Year))
+
+Tabela3<-c%>%group_by(Item_Type)%>%summarise(SomadasVendas=sum(Item_Outlet_Sales))
+```
+
+##Análise das medidas de tendência central
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+ds_measures_location(c)
+```
+
+##Utilizando o pacote Descriptr para análisar a Tabela de Frequência
+```{r}
+ds_auto_freq_table(c)
+```
+
+##Solução para Análise:
+Agrupar duas ou mais variáveis que pudessem acrescentar algo na análise para a geração de seus gráficos e de suas medidas de dispersão, dando destaque para a variável de interesse.
+
+
+
+##Gerando gráficos pelo DESCRIPTR
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+ds_plot_density(Tabela1)
+```
+
+##Gráficos gerados pelo ggplot
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+Grafico6<-ggplot(Tabela2,aes(Outlet_Identifier,Vendas))+geom_col()+aes(fill=FaixadePreço)+labs(title="Vendas Totais por Loja",y="Total de Vendas (R$)",x="ID da Loja")+ylim(0,2300000)
+Grafico5<-ggplot(TabelaItem,aes(PreçoMedio,TotalVendas))+geom_jitter(aes(color=Peso))
+Grafico5<-ggMarginal(Grafico5,type=c("histogram"),alpha="0.1")
+Grafico4<-ggplot(c,aes(Outlet_Identifier,Item_Outlet_Sales))+geom_boxplot(fill="Tan",outlier.shape=NA)+labs(x="Codigo da Loja", y="Vendas")
+Grafico3<-ggplot(c, aes(Item_Fat_Content,Item_Type))+geom_count(alpha="0.1")+labs(x=NULL,y="Tipo de Produto")
+Grafico2<-ggplot(Tabela1,aes(x="",fill=Item_Fat_Content))+geom_bar(colour="black")+labs(title="Proporção de Item LowFat/Regular",fill="",x=NULL,y=NULL)+theme(axis.line=element_blank())
+Grafico2<-Grafico2+coord_polar(theta = "y")+removeGrid(x=TRUE,y=TRUE)
+Grafico1<-ggplot(Tabela4,aes(Outlet_Size,SomadasVendas))+geom_col(aes(fill=mediana))+labs(x="Tamanho da Loja",y="Total de Vendas")
+Grafico7<-ggplot(Tabela3,aes(SomadasVendas,Item_Type))+geom_point()+labs(title="Tipo de Item x Vendas",x="Valor total de vendas(R$)",y="Tipo do Item")
+
+Grafico1
+Grafico2
+Grafico3
+Grafico4
+Grafico5
+Grafico6
+Grafico7
+````
+
+##Conclusão
+Com base nas informações e no dados obtidos durante as análises, a elaboração do trabalho foi facilitada com o uso do pacote DescriptR, provando sua utilidade. Além disso, pelas avaliação das variáveis, podemos perceber que a rede HiperUFSC pode se tratar de uma rede de produtos naturais e saudáveis, visto que seus itens mais vendidos tratam-se de frutas e vegetais e "comidas rápidas", todas categorizadas como baixa gordura. 
+
